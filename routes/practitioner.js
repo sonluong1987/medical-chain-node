@@ -48,7 +48,7 @@ router.post('/createPatient', async function (req, res, next) {
     const businessNetworkDefinition = await connection.connect('admin@medical-chain');
     const serializer = businessNetworkDefinition.getSerializer();
     const details = req.body.details;
-    const transactionJSON = {
+    const createPatientTransaction = serializer.fromJSON({
       '$class': NS + '.CreatePatient',
       'patientId': shortid.generate(),
       'firstName': details.firstName,
@@ -57,10 +57,30 @@ router.post('/createPatient', async function (req, res, next) {
       'dob': details.dob,
       'weight': details.weight,
       'height': details.height
-    };
-    const createPatientTransaction = serializer.fromJSON(transactionJSON);
+    });
+
     await connection.submitTransaction(createPatientTransaction);
-    res.status(200).send(transactionJSON);
+
+    // const participantDetailsRegistry = await connection.getAssetRegistry('org.acme.sample.PatientDetails');
+    // const participantRegistry = await connection.getParticipantRegistry('org.acme.sample.Patient');
+    // const factory = await businessNetworkDefinition.getFactory();
+    // const pid = shortid.generate();
+    // const pdid = shortid.generate();
+
+    // patient = factory.newResource(NS, 'Patient', pid);
+    // patientDetail = factory.newResource(NS, 'PatientDetails', pdid);
+    // patientDetail.firstName = req.body.details.firstName;
+    // patientDetail.lastName = req.body.details.lastName;
+    // patientDetail.address = req.body.details.address;
+    // patientDetail.dob = req.body.details.dob;
+    // patientDetail.height = req.body.details.height;
+    // patientDetail.weight = req.body.details.weight;
+    // patientDetail.owner = factory.newRelationship(NS, 'Patient', pid);
+    // patient.personalDetails = factory.newRelationship(NS, 'PatientDetails', pdid);
+
+    // await participantRegistry.add(patient)
+    // await participantDetailsRegistry.add(patientDetail);
+    res.send(200, "Success");
   }
   catch (error) {
     next(error);
@@ -71,49 +91,23 @@ router.post('/createPractitioner', async function (req, res, next) {
   try {
     const businessNetworkDefinition = await connection.connect('admin@medical-chain');
 
-    const serializer = businessNetworkDefinition.getSerializer();
-    const details = req.body.details;
-    const transactionJSON = {
-      '$class': NS + '.CreatePractitioner',
-      'practitionerId': shortid.generate(),
-      'firstName': details.firstName,
-      'lastName': details.lastName,
-      'address': details.address,
-    };
-    const createPractitionerTransaction = serializer.fromJSON(transactionJSON);
+    // const participantDetailsRegistry = await connection.getAssetRegistry('org.acme.sample.PractitionerDetails');
+    // const participantRegistry = await connection.getParticipantRegistry('org.acme.sample.Practitioner');
+    // const factory = await businessNetworkDefinition.getFactory();
+    // const pid = shortid.generate();
+    // const pdid = shortid.generate();
 
-    await connection.submitTransaction(createPractitionerTransaction);
-    res.status(200).send(transactionJSON);
-  }
-  catch (error) {
-    next(error);
-  }
-});
+    // const practitioner = factory.newResource(NS, 'Practitioner', pid);
+    // const practitionerDetail = factory.newResource(NS, 'PractitionerDetails', pdid);
+    // practitionerDetail.firstName = req.body.details.firstName;
+    // practitionerDetail.lastName = req.body.details.lastName;
+    // practitionerDetail.address = req.body.details.address;
+    // practitionerDetail.owner = factory.newRelationship(NS, 'Practitioner', pid);
+    // practitioner.profile = factory.newRelationship(NS, 'PractitionerDetails', pdid);
 
-router.post('/createRecord', async function (req, res, next) {
-  try {
-    const businessNetworkDefinition = await connection.connect('admin@medical-chain');
-    // const patientRegistry = await connection.getParticipantRegistry(NS + '.Patient');
-    // const patient = await patientRegistry.get(req.body.patientId);
-    const patientResource = 'resource:' + NS + '.Patient#' + req.body.patientId;
-    const practitionerResource = 'resource:' + NS + '.Practitioner#' + req.body.practitionerId;
-    // const practitionerRegistry = await connection.getParticipantRegistry(NS + '.Practitioner');
-    // const practitioner = await practitionerRegistry.get(req.body.practitionerId);
-
-    const serializer = businessNetworkDefinition.getSerializer();
-    const transactionJSON = {
-      '$class': NS + '.CreateRecord',
-      'recordId': shortid.generate(),
-      'description': req.body.description,
-      'data': req.body.data,
-      'date': Math.floor(new Date() / 1000),
-      'patient': patientResource,
-      'practitioner': practitionerResource
-    };
-    const createRecordTransaction = serializer.fromJSON(transactionJSON);
-
-    await connection.submitTransaction(createRecordTransaction);
-    res.send(200, transactionJSON);
+    // await participantRegistry.add(practitioner)
+    // await participantDetailsRegistry.add(practitionerDetail);
+    res.send(200, "Success");
   }
   catch (error) {
     next(error);

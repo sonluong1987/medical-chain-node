@@ -1,6 +1,6 @@
 {
   "name": "medical-chain-node",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": true,
   "scripts": {
     "start": "node ./bin/www"
@@ -14,8 +14,9 @@
     "debug": "~2.6.9",
     "express": "~4.16.0",
     "http-errors": "^1.6.3",
-    "jade": "~1.11.0",
+    "pug": "~2.0.3",
     "morgan": "~1.9.0",
-    "nodemon": "^1.17.3"
+    "nodemon": "^1.17.3",
+    "shortid": "^2.2.8"
   }
 }

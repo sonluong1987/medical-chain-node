@@ -1,0 +1,12 @@
+extend layout
+
+mixin cell(name)
+  button #{name}
+
+block content
+  -let var1 = 1234
+  h2 Son dep zai
+  p Ahihi #{var1}
+  +cell("Son")
+  each patient in patients
+    p= patient.personalDetails.firstName
