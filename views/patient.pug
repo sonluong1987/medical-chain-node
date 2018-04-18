@@ -1,0 +1,25 @@
+extend layout
+
+mixin cell(name)
+  button #{name}
+
+block content
+  script(src='/javascripts/patient.js')
+  h1 Practitioners
+  #table-wrapper
+    table#desc
+      tr
+        th Name
+        th Address
+        th Action
+      each practitioner in practitioners
+        tr
+          td= practitioner.profile.firstName + " " + practitioner.profile.lastName
+          td= practitioner.profile.address
+          td
+            if (patient.authorized && patient.authorized.indexOf(practitioner.getIdentifier()) > -1)
+              p Authorized
+            else 
+              button(onClick= "callAlert()") Authorize
+
+
