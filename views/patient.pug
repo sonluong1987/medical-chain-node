@@ -5,7 +5,35 @@ mixin cell(name)
 
 block content
   script(src='/javascripts/patient.js')
-  h1 Practitioners
+  h1 Welcome, #{patientDetail.firstName}
+  h2 Your profile
+  #table-wrapper
+    table#desc
+      tr
+        th Name
+        th Address
+        th Birth Date
+        th Weight
+        th Height
+      tr
+        td= patientDetail.firstName + " " + patientDetail.lastName
+        td= patientDetail.address
+        td= patientDetail.dob
+        td= patientDetail.weight
+        td= patientDetail.weight
+  h2 Your medical records
+    #table-wrapper
+    table#desc
+      tr
+        th Description
+        th Record Data
+      each record in records
+        tr
+          td= record.description
+          td
+            a(href='/practitioner/viewRecordData?id=' + record.recordId)
+              button View Record
+  h2 Available healthcare practitioners
   #table-wrapper
     table#desc
       tr
@@ -17,9 +45,9 @@ block content
           td= practitioner.profile.firstName + " " + practitioner.profile.lastName
           td= practitioner.profile.address
           td
-            if (patient.authorized && patient.authorized.indexOf(practitioner.getIdentifier()) > -1)
-              p Authorized
+            if (patient.authorized && patient.authorized.indexOf(practitioner.practitionerId) > -1)
+              button(onClick= "unauthorizePractitioner('"+practitioner.practitionerId+"')") Unauthorize
             else 
-              button(onClick= "callAlert()") Authorize
+              button(onClick= "authorizePractitioner('"+practitioner.practitionerId+"')") Authorize
 
 

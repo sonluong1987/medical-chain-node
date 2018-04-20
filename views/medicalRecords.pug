@@ -1,0 +1,22 @@
+extend layout
+
+mixin cell(name)
+  button #{name}
+
+block content
+  script(src='/javascripts/practitioner.js')
+  h1 Medical Records
+  #table-wrapper
+    table#desc
+      tr
+        th Description
+        th Record Data
+      each record in records
+        tr
+          td= record.description
+          td
+            a(href='/practitioner/viewRecordData?id=' + record.recordId)
+              button View Record
+
+
+

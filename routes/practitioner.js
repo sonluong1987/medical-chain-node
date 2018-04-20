@@ -6,122 +6,128 @@ const shortid = require('shortid');
 const express = require('express');
 const router = express.Router();
 
+const multer = require('multer');
+const upload = multer({dest: './uploads/'});
+
+const fs = require('fs');
+
 const NS = 'org.acme.sample';
 
 /* GET home page. */
-router.get('/', async (req, res, next) => {
-  const businessNetworkDefinition = await connection.connect('admin@medical-chain');
-  const patients = await getAllPatients(connection);
-
-  res.render('index', { title: 'Medical Chain' , patients: patients});
-});
-
-router.get('/ping', async function (req, res, next) {
-  result = await connection.ping();
-  res.send(result);
-  // res.render('index', { title: 'Express' });
-});
-
-router.get('/registries', async (req, res, next) => {
+router.get('/testgetrecords', async (req, res, next) => {
   try {
     const businessNetworkDefinition = await connection.connect('admin@medical-chain');
-    const factory = await businessNetworkDefinition.getFactory();
+    const recordDataRegistry = await connection.getAssetRegistry(NS + '.MedicalRecordData');
 
-    const registries = await connection.getParticipantRegistry('org.acme.sample.Patient');
-    const patients = await registries.getAll();
-
-    const serializer = businessNetworkDefinition.getSerializer();
-
-    // console.log(patients);
-    patients.forEach(element => {
-      console.log(element.patientId);
-    });
+    const record = await recordDataRegistry.get('S1WzWaUnM');
+    console.log(record.data);
     res.send(200);
+    // const img = new Buffer(record.data, 'base64');
+
+    
+    // res.writeHead(200, {
+    //   'Content-Type': 'image/jpg',
+    //   'Content-Length': img.length
+    // });
+    // res.end(img);
+    // res.render('practitioner', { patients: patients });
+  }
+  catch(error) {
+    next(error);
+  }
+});
+
+router.get('/', async (req, res, next) => {
+  try {
+    const businessNetworkDefinition = await connection.connect(req.session.uid + '@medical-chain');
+    const practitionerRegistry = await connection.getParticipantRegistry(NS + '.Practitioner');
+    const patientsDetailsRegistry = await connection.getAssetRegistry(NS + '.PatientDetails');
+
+    const patients = await patientsDetailsRegistry.getAll();
+    const practitioner = await practitionerRegistry.resolve(req.session.uid);
+
+    res.render('practitioner', { patients: patients, practitioner: practitioner });
+  }
+  catch(error) {
+    next(error);
+  }
+});
+
+router.get('/createRecord', async (req, res, next) => {
+  try {
+    res.render('createRecord', {patientId: req.query.patientId});
   }
   catch (error) {
-    next(error)
+    next(error);
   }
 })
 
-router.post('/createPatient', async function (req, res, next) {
+router.post('/createRecord', upload.single('record'), async function (req, res, next) {
   try {
-    const businessNetworkDefinition = await connection.connect('admin@medical-chain');
+    console.log(req.body);
+    const encoded = req.file.toString('base64');
+    base64 = new Buffer(fs.readFileSync(req.file.path)).toString("base64")
+    fs.unlink(req.file.path);
+
+    const businessNetworkDefinition = await connection.connect(req.session.uid + '@medical-chain') ;
+    const patientResource = 'resource:' + NS + '.Patient#' + req.body.patientId;
+    const practitionerResource = 'resource:' + NS + '.Practitioner#' + req.session.uid;
+
     const serializer = businessNetworkDefinition.getSerializer();
-    const details = req.body.details;
-    const createPatientTransaction = serializer.fromJSON({
-      '$class': NS + '.CreatePatient',
-      'patientId': shortid.generate(),
-      'firstName': details.firstName,
-      'lastName': details.lastName,
-      'address': details.address,
-      'dob': details.dob,
-      'weight': details.weight,
-      'height': details.height
-    });
+    const transactionJSON = {
+      '$class': NS + '.CreateRecord',
+      'recordId': shortid.generate(),
+      'description': req.body.description,
+      'data': base64,
+      'date': Math.floor(new Date() / 1000),
+      'patient': patientResource,
+      'practitioner': practitionerResource
+    };
+    const createRecordTransaction = serializer.fromJSON(transactionJSON);
 
-    await connection.submitTransaction(createPatientTransaction);
-
-    // const participantDetailsRegistry = await connection.getAssetRegistry('org.acme.sample.PatientDetails');
-    // const participantRegistry = await connection.getParticipantRegistry('org.acme.sample.Patient');
-    // const factory = await businessNetworkDefinition.getFactory();
-    // const pid = shortid.generate();
-    // const pdid = shortid.generate();
-
-    // patient = factory.newResource(NS, 'Patient', pid);
-    // patientDetail = factory.newResource(NS, 'PatientDetails', pdid);
-    // patientDetail.firstName = req.body.details.firstName;
-    // patientDetail.lastName = req.body.details.lastName;
-    // patientDetail.address = req.body.details.address;
-    // patientDetail.dob = req.body.details.dob;
-    // patientDetail.height = req.body.details.height;
-    // patientDetail.weight = req.body.details.weight;
-    // patientDetail.owner = factory.newRelationship(NS, 'Patient', pid);
-    // patient.personalDetails = factory.newRelationship(NS, 'PatientDetails', pdid);
-
-    // await participantRegistry.add(patient)
-    // await participantDetailsRegistry.add(patientDetail);
-    res.send(200, "Success");
+    await connection.submitTransaction(createRecordTransaction);
+    res.redirect('/practitioner')
   }
   catch (error) {
     next(error);
   }
 });
 
-router.post('/createPractitioner', async function (req, res, next) {
+router.get('/viewRecords', async (req, res, next) => {
   try {
-    const businessNetworkDefinition = await connection.connect('admin@medical-chain');
+    const businessNetworkDefinition = await connection.connect(req.session.uid + '@medical-chain');
 
-    // const participantDetailsRegistry = await connection.getAssetRegistry('org.acme.sample.PractitionerDetails');
-    // const participantRegistry = await connection.getParticipantRegistry('org.acme.sample.Practitioner');
-    // const factory = await businessNetworkDefinition.getFactory();
-    // const pid = shortid.generate();
-    // const pdid = shortid.generate();
+    const owner = 'resource:org.acme.sample.Patient#' + req.query.patientId;
+    const query = connection.buildQuery("SELECT org.acme.sample.MedicalRecord WHERE (owner == '"+ owner +"')");
+    const records = await connection.query(query);
 
-    // const practitioner = factory.newResource(NS, 'Practitioner', pid);
-    // const practitionerDetail = factory.newResource(NS, 'PractitionerDetails', pdid);
-    // practitionerDetail.firstName = req.body.details.firstName;
-    // practitionerDetail.lastName = req.body.details.lastName;
-    // practitionerDetail.address = req.body.details.address;
-    // practitionerDetail.owner = factory.newRelationship(NS, 'Practitioner', pid);
-    // practitioner.profile = factory.newRelationship(NS, 'PractitionerDetails', pdid);
-
-    // await participantRegistry.add(practitioner)
-    // await participantDetailsRegistry.add(practitionerDetail);
-    res.send(200, "Success");
+    res.render('medicalRecords', { records: records });
   }
-  catch (error) {
+  catch(error) {
     next(error);
   }
 });
 
-router.post('/test', async function (req, res, next) {
-  res.send(req.body.details);
-});
+router.get('/viewRecordData', async (req, res, next) => {
+  try {
+    const businessNetworkDefinition = await connection.connect(req.session.uid + '@medical-chain');
+    const recordDataRegistry = await connection.getAssetRegistry(NS + '.MedicalRecordData');
+  
+    const recordData = await recordDataRegistry.get(req.query.id);
 
-async function getAllPatients(connection) {
-  const patientRegistry = await connection.getParticipantRegistry('org.acme.sample.Patient');
-  const patients = await patientRegistry.resolveAll();
-  return patients;
-}
+    const img = new Buffer(recordData.data, 'base64');
+
+    res.writeHead(200, {
+      'Content-Type': 'image/jpg',
+      'Content-Length': img.length
+    });
+    res.end(img);
+    // res.render('practitioner', { patients: patients });
+    // res.render('medicalRecordDetail', { base64data: recordData.data });
+  }
+  catch(error) {
+    next(error);
+  }
+});
 
 module.exports = router;

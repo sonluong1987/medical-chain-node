@@ -1,12 +1,15 @@
 extend layout
 
-mixin cell(name)
-  button #{name}
-
 block content
-  -let var1 = 1234
-  h2 Son dep zai
-  p Ahihi #{var1}
-  +cell("Son")
-  each patient in patients
-    p= patient.personalDetails.firstName
+  script(src='/javascripts/login.js')
+  h1 Welcome to Medical Chain (Test)
+  h2 To start, enter your id
+    br
+    input#adminId(type='text', placeholder='id')
+    button(onClick="loginAdmin()") Login as admin 
+    br
+    input#patientId(type='text', placeholder='id')
+    button(onClick="loginPatient()") Login as patient 
+    br
+    input#practitionerId(type='text', placeholder='id')
+    button(onClick="loginPractitioner()") Login as practitioner 

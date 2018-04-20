@@ -1,0 +1,28 @@
+extend layout
+
+mixin cell(name)
+  button #{name}
+
+block content
+  script(src='/javascripts/practitioner.js')
+  h1 Welcome, #{practitioner.profile.firstName} #{practitioner.profile.lastName}
+  #table-wrapper
+    table#desc
+      tr
+        th Name
+        th Address
+        th Date of Birth
+      each patient in patients
+        tr
+          td= patient.firstName + " " + patient.lastName
+          td= patient.address
+          td= patient.dob
+          td
+            a(href='/practitioner/viewRecords?patientId=' + patient.patientDetailsId)
+              button View Records
+          td
+            a(href='/practitioner/createRecord?patientId=' + patient.patientDetailsId)
+              button Create New Record
+
+
+
